@@ -1,0 +1,294 @@
+packages:
+  - ape
+  - geometry
+  - ggplot2
+  - ggrastr
+  - ggtree
+  - parallel
+  - pavo
+  - raster
+  - reshape2
+  - rmarkdown
+  - rptR
+  - spacodiR
+  - vegan
+  - viridis
+  - hierfstat
+  - tidyverse
+
+sources:
+  - R/sources.R
+  - R/decouple_hugo.R
+
+plot_options:
+  a5:
+    width: 8.3
+    height: 5.8
+
+targets:
+  all:
+    depends:
+      - report.html
+      - pdf
+      - png
+      - summary_tausts.tex
+      - summary_mantel.tex
+
+  pdf:
+    depends:
+      - figures/comcolvol.pdf
+#      - figures/comcolvol_out.pdf
+      - figures/commu_colvol_patch.pdf
+      - figures/cooc_colvol.pdf
+      - figures/communities_map.pdf
+      - figures/comm_brightnessrange.pdf
+
+  png:
+    depends:
+      - figures/comcolvol.png
+ #     - figures/comcolvol_out.png
+      - figures/commu_colvol_patch.png
+      - figures/cooc_colvol.png
+      - figures/communities_map.png
+      - figures/comm_brightnessrange.png
+
+  ecuador_vectormap:
+    command: readRDS(file = "img/ECU_adm0.rds")
+  elevation_raster:
+    command: raster(x = "img/alt_merged_clipped.tif")
+  repet_var:
+    command: read.csv(file = "data/repet_var.csv")
+  complete_multiphylo:
+    command: read.nexus(file = "data/allhum_consensus.tre")
+  raw_multiphylo:
+    command: read.nexus(file = "data/spJuan_100trees.tre")
+  spaco_commu:
+    command: read.csv(file = "data/spaco_commu.csv", row.names = 1)
+  sites_loc:
+    command: read.csv(file = "data/sites_loc.csv")
+  cleaned_stotz:
+    command: read.csv(file = "data/stotz_cleaned.csv")
+  area_patches:
+    command: read.csv(file = "data/area_patches.csv")
+  corpatsp:
+    command: read.csv(file = "data/corpatsp.csv", row.names = 1, check.names = FALSE)
+#  data_all:
+#    command: read.csv(file = "data/Data_all.csv")
+  data_all:
+    command: import_data_all()
+  voro_bg_maxdL:
+    command: readRDS(file = "data/voro_bg_maxdL.rds")
+  voro_bg_maxdS:
+    command: readRDS(file = "data/voro_bg_maxdS.rds")
+  VS_cones:
+    command: read.csv(file = "data/VS_shearwater.csv")
+  UVS_cones:
+    command: read.csv(file = "data/UVS_bluetit.csv")
+  illum_U:
+    command: read.csv(file = "data/LuxFS.csv")
+  illum_C:
+    command: read.csv(file = "data/LuxLG.csv")
+  background_C:
+    command: read.csv(file = "data/FondCAF.csv")
+  background_U:
+    command: read.csv(file = "data/FondSBFV.csv")
+  list_areas_short:
+    command: c(I('CR'), I('BA'), I('RU'), I('R1'), I('TH'), I('BR'), I('BE'), I('RE'))
+
+  species_cooc:
+    command: compute_cooc(spaco_commu)
+
+  spectra_all:
+    command: compute_spectra_all(data_all)
+  vismodel_all:
+    command: compute_vismodel_all(spectra_all,
+                                  habitat_df = cleaned_stotz,
+                                  vision_df = VS_cones,
+                                  illum_C = illum_C, illum_U = illum_U)
+  tetra_all:
+    command: compute_tetra_all(vismodel_all)
+  contrasts:
+    command: compute_contrasts(spectra_max,
+                               habitat_df = cleaned_stotz,
+                               vision_df = VS_cones,
+                               illum_C = illum_C, illum_U = illum_U,
+                               bg_C = background_C, bg_U = background_U)
+  spectra_max:
+    command: compute_spectra_max(spectra_all)
+  tetra_max:
+    command: prepare_tetra_max(tetra_all)
+  brightness_max:
+    command: compute_brightness_max(tetra_all)
+  IR_MAX:
+    command: prepare_IR_MAX(tetra_all)
+  iri:
+    command: prepare_iri(tetra_all)
+
+  cleaned_multiphylo:
+    command: cleanup_phylo(raw_multiphylo)
+
+  pist:
+    command: compute_PIst(spaco_commu, cleaned_multiphylo)
+
+  crossvolmat:
+    command: compute_crossvolmat(tetra_max)
+
+  barycenters:
+    command: create_bary(tetra_max, area_patches, corpatsp)
+
+  tausts_dL:
+    command: compute_tau_dL(voro_bg_maxdL, spaco_commu)
+  tausts_dS:
+    command: compute_tau_dS(voro_bg_maxdS, spaco_commu)
+  tausts_dL_rank:
+    command: compute_tau_dL_rank(voro_bg_maxdL, spaco_commu)
+  tausts_dS_rank:
+    command: compute_tau_dS_rank(voro_bg_maxdS, spaco_commu)
+
+  brightness_byarea:
+    command: prepare_df_byarea(list_areas = list_areas_short, df = brightness_max)
+  tetra_byarea:
+    command: prepare_df_byarea(list_areas = list_areas_short, df = tetra_max)
+  iri_byarea:
+    command: prepare_df_byarea(list_areas = list_areas_short, df = iri)
+  IR_MAX_byarea:
+    command: prepare_df_byarea(list_areas = list_areas_short, df = IR_MAX)
+
+  tausts_bary:
+    command: compute_TAUst_with_p(sp.plot = spaco_commu, sp.traits = barycenters)
+  tausts_crossvolmat:
+    command: compute_TAUst_with_p(sp.plot = spaco_commu, sp.traits = crossvolmat)
+
+  tausts_iri:
+    command: compute_TAUst_onlist(sp.plot = spaco_commu, liste_sp.trait = iri_byarea)
+  tausts_IR_MAX:
+    command: compute_TAUst_onlist(sp.plot = spaco_commu, liste_sp.trait = IR_MAX_byarea)
+  tausts_tetra:
+    command: compute_TAUst_onlist(sp.plot = spaco_commu, liste_sp.trait = tetra_byarea)
+  tausts_brightness:
+    command: compute_TAUst_onlist(sp.plot = spaco_commu, liste_sp.trait = brightness_byarea)
+
+  dc_barycenters:
+    command: compute_decoupled(cleaned_multiphylo, barycenters)
+
+  dc_brightness:
+    command: compute_decoupled_onlist(cleaned_multiphylo, brightness_byarea)
+  dc_tetra:
+    command: compute_decoupled_onlist(cleaned_multiphylo, tetra_byarea)
+  dc_iri:
+    command: compute_decoupled_onlist(cleaned_multiphylo, iri_byarea)
+  dc_IR_MAX:
+    command: compute_decoupled_onlist(cleaned_multiphylo, IR_MAX_byarea)
+
+  tausts_dc_bary:
+    command: spaco_decoupled(sp.plot = spaco_commu, sp.decoupled = dc_barycenters)
+
+  tausts_dc_brightness:
+    command: spaco_decoupled_onlist(sp.plot = spaco_commu, liste_sp.trait = dc_brightness)
+  tausts_dc_tetra:
+    command: spaco_decoupled_onlist(sp.plot = spaco_commu, liste_sp.trait = dc_tetra)
+  tausts_dc_IR_MAX:
+    command: spaco_decoupled_onlist(sp.plot = spaco_commu, liste_sp.trait = dc_IR_MAX)
+  tausts_dc_iri:
+    command: spaco_decoupled_onlist(sp.plot = spaco_commu, liste_sp.trait = dc_iri)
+
+  dist_barycenters:
+    command: compute_dist_bary(barycenters)
+  dist_patch:
+    command: compute_huedist_patch(tetra_byarea)
+  Cdist:
+    command: create_Cdist(spaco_commu)
+
+  mantel_cooc_crossvolmat:
+    command: partial_mantel(cleaned_multiphylo, Cdist, crossvolmat)
+  mantel_cooc_distbary:
+    command: partial_mantel(cleaned_multiphylo, Cdist, dist_barycenters)
+  mantel_cooc_distpatch:
+    command: partial_mantel_onlist(cleaned_multiphylo, Cdist, dist_patch)
+
+  figures/comcolvol.png:
+    command: plot_comcolvol(tetra_max, spaco_commu)
+    plot: true
+  figures/commu_colvol_patch.png:
+    command: plot_commu_colvol_patch(tetra_byarea, spaco_commu)
+    plot: true
+  figures/cooc_colvol.png:
+    command: plot_cooc_colvol(crossvolmat, species_cooc)
+    plot: true
+  figures/communities_map.png:
+    command: plot_map(ecuador_vectormap, elevation_raster, sites_loc)
+    plot: true
+  figures/phylo_coverage.png:
+    command: plot_coverage(complete_multiphylo, spaco_commu)
+    plot: true
+  figures/comm_brightnessrange.png:
+    command: plot_comm_brightnessrange(brightness_max, spaco_commu)
+    plot: true
+
+  figures/comcolvol.pdf:
+    command: plot_comcolvol(tetra_max, spaco_commu)
+    plot: a5
+
+  figures/commu_colvol_patch.pdf:
+    command: plot_commu_colvol_patch(tetra_byarea, spaco_commu)
+    plot: a5
+  figures/cooc_colvol.pdf:
+    command: plot_cooc_colvol(crossvolmat, species_cooc)
+    plot: a5
+  figures/communities_map.pdf:
+    command: plot_map(ecuador_vectormap, elevation_raster, sites_loc)
+    plot: a5
+  figures/phylo_coverage.pdf:
+    command: plot_coverage(complete_multiphylo, spaco_commu)
+    plot: a5
+  figures/comm_brightnessrange.pdf:
+    command: plot_comm_brightnessrange(brightness_max, spaco_commu)
+    plot: a5
+  figures/tree_sample.pdf:
+    command: plot_coverage(complete_multiphylo, spaco_commu)
+    plot: a5
+  figures/treecols.pdf:
+    command: plot_col_tree(spectra_max, cleaned_multiphylo)
+    plot: a5
+
+
+  report.html:
+    depends:
+      - png
+      - repet_var
+      - pist
+      - cleaned_multiphylo
+      - tausts_bary
+      - tausts_dc_bary
+      - tausts_tetra
+      - tausts_dc_tetra
+      - tausts_IR_MAX
+      - tausts_dc_IR_MAX
+      - tausts_iri
+      - tausts_dc_iri
+      - tausts_brightness
+      - tausts_dc_brightness
+      - mantel_cooc_distbary
+      - mantel_cooc_crossvolmat
+      - mantel_cooc_distpatch
+    command: render("report.Rmd")
+
+  summary_tausts.tex:
+    depends:
+      - list_areas_short
+      - tausts_bary
+      - tausts_dc_bary
+      - tausts_tetra
+      - tausts_dc_tetra
+      - tausts_brightness
+      - tausts_dc_brightness
+      - tausts_iri
+      - tausts_dc_iri
+      - tausts_IR_MAX
+      - tausts_dc_IR_MAX
+    knitr: true
+
+  summary_mantel.tex:
+    depends:
+      - mantel_cooc_distpatch
+    knitr: true

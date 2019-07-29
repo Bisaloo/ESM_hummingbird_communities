@@ -1,0 +1,253 @@
+---
+output: html_document
+---
+
+Competition may have two effects:
+
+- Divergence of niche to decrease the intensity of competition
+- In the case of sensory competition, evolution of the signal to better resist
+competition
+
+# Preliminary 1: phylogenetic structure
+
+There is a very strong phylogenetic clustering ($\pi_{st}=`r pist[1]`$
+with $p_{\pi_{st}<0}=`r pist[2]`$ and $p_{\pi_{st}>0}=`r pist[3]`$) in hummingbirds communities in Ecuador taken as a whole.
+This is an issue because it might cause us to observe a phenotypic clustering
+without it being the sign of an evolutionary pressure.
+
+# Preliminary 2: repeatability
+
+```{r message = F, warning = F}
+rx_dif = rpt(x ~ 1 | Species, grname = 'Species', data = repet_var[repet_var$Exp == 'MAX' & repet_var$Type == 'Diffus',], datatype = 'Gaussian')
+rx_dir = rpt(x ~ 1 | Species, grname = 'Species', data = repet_var[repet_var$Exp == 'MAX' & repet_var$Type == 'Directionnel',], datatype = 'Gaussian')
+rx_all = rpt(x ~ 1 | SpeciesType, grname = 'SpeciesType', data = repet_var[repet_var$Exp == 'MAX',], datatype = 'Gaussian')
+                                                                                                                                                  
+ry_dif = rpt(y ~ 1 | Species, grname = 'Species', data = repet_var[repet_var$Exp == 'MAX' & repet_var$Type == 'Diffus',], datatype = 'Gaussian')
+ry_dir = rpt(y ~ 1 | Species, grname = 'Species', data = repet_var[repet_var$Exp == 'MAX' & repet_var$Type == 'Directionnel',], datatype = 'Gaussian')
+ry_all = rpt(y ~ 1 | SpeciesType, grname = 'SpeciesType', data = repet_var[repet_var$Exp == 'MAX',], datatype = 'Gaussian')
+                                                                                                                                                  
+rz_dif = rpt(z ~ 1 | Species, grname = 'Species', data = repet_var[repet_var$Exp == 'MAX' & repet_var$Type == 'Diffus',], datatype = 'Gaussian')
+rz_dir = rpt(z ~ 1 | Species, grname = 'Species', data = repet_var[repet_var$Exp == 'MAX' & repet_var$Type == 'Directionnel',], datatype = 'Gaussian')
+rz_all = rpt(z ~ 1 | SpeciesType, grname = 'SpeciesType', data = repet_var[repet_var$Exp == 'MAX',], datatype = 'Gaussian')
+
+rb_dif = rpt(B2 ~ 1 | Species, grname = 'Species', data = repet_var[repet_var$Exp == 'MAX' & repet_var$Type == 'Diffus',], datatype = 'Gaussian')
+rb_dir = rpt(B2 ~ 1 | Species, grname = 'Species', data = repet_var[repet_var$Exp == 'MAX' & repet_var$Type == 'Directionnel',], datatype = 'Gaussian')
+dir_all = rpt(B2 ~ 1 | SpeciesType, grname = 'SpeciesType', data = repet_var[repet_var$Exp == 'MAX',], datatype = 'Gaussian')
+```
+
+# Divergence
+
+## Whole bird
+
+First, we use the color volumes because it is commonly used and it takes
+into account all patches.
+
+We have two predictions :
+
+- The colour volume of the community first increases with the number of species
+and then saturates
+- Co-occuring species tend to be more different than expected by chance (by
+weighting with the phylogeny)
+
+### Colour volume
+
+This plot is better fitted by a log than a lm. This confirms our prediction :
+Colour volume of the communities increases until it reaches a plateau : all 
+colour niche are occupied.
+
+Conclusion: there is a limited number of colours that can be used within a 
+communities. We expect that species will compete for those.
+
+![Link between community colour volume and species richness](figures/comcolvol.png)
+
+#### Mantel test
+
+To test whether co-occuring species are more similar than expected by chance or 
+not, we use a Mantel test comparing the volume intersection matrix and the 
+checkerboard distance.
+
+There is no relationship species co-occurence and the colour (dis)similarity 
+($p=`r mantel_cooc_crossvolmat["p_mantel"]`$), even when taking into account
+the phylogeny ($p=`r mantel_cooc_crossvolmat["p_pmantel"]`$).
+
+### Barycenters
+
+Colour volumes intersection may present issues so the same test is performed on
+barycenter of coordinates, weighted by the surface of each patch.
+
+**Conclusion:** there is no effect of species co-occurence on the colour
+($p=`r mantel_cooc_distbary["p_mantel"]`$), even when taking into account the
+phylogeny ($p=`r mantel_cooc_distbary["p_pmantel"]`$).
+
+Without decouple, we find some clustering ($\tau_{st}=`r tausts_bary[1]`$, 
+$p_{\tau_{st}<0}=`r tausts_bary[2]`$ and $p_{\tau_{st}>0}=`r tausts_bary[3]`$) but it vanishes after using the decouple function 
+($dc\tau_{st}=`r tausts_dc_bary[1]`$, $p_{\tau_{st}<0}=`r tausts_dc_bary[2]`$, $p_{\tau_{st}>0}=`r tausts_dc_bary[3]`$)
+
+### Limits of this approach
+
+We see here that species within a community have a limited number of colours 
+they can use.
+
+However, this approach has issues because it pools together all patches. It is 
+nonetheless possible that two co-occuring birds have exactly the same colours 
+but on different patches.
+
+For this reason, we then conduct the same tests but patch by patch.
+
+## Patch by patch
+
+7 areas have been measured on all species:
+
+According to the litterature, it is likely that those areas are submitted to 
+different selection forces :
+
+- the dorsal region is usually mainly constrained by natural selection, ie
+  crypsis and predator avoidance
+- the ventral region is usually dedicated to communication and therefore 
+  mainly the result of sexual selection
+  
+To test that and maybe formulate different predictions depending on the patch,
+we measure the contrasts of the different regions. Regions used in camouflage
+will have a low contrast while regions used in communication will have high
+contrast.
+
+We first need to identify big regions on the bird because it doesn't make sense
+to compute contrast on a unique patch.
+
+This is achieved by using the patterns and clustering together patches that were
+described as similar with human vision
+
+(*ellipsis*)
+
+If we only take into account contrast with the background, 
+Face = Head = Ventral area > Dorsal area = Tail = Wing                        
+          
+This is in accordance to what is reported in the litterature. We predict 
+divergence for face, head and ventral area and convergence for dorsal area,tail 
+and wing.
+
+(Intrabird contrasts are a bit less clear)
+
+### Colour volume
+
+![Community colour volume for different patches](figures/commu_colvol_patch.png)
+
+*add AIC*
+
+*add without AGLCUP*
+
+### Mantel test
+
+Each point in the tetrahedron is characterized by coordinates $x$, $y$, $z$. We
+can compute the colour distance between two individuals on a given patch by
+computing the Euclidean distance between the 2 points.
+
+```{r}
+knitr::kable(mantel_cooc_distpatch)
+```
+
+On a given patch, co-occuring species don't differ more than expected by chance.
+
+### Spacodi
+
+By using the same coordinates $x$, $y$, $z$ to characterize the colour, we can
+use $\tau_{st}$ to determine whether there is a phenotypic clustering, no 
+phenotypic structure or a phenotypic overdispersion.
+
+```{r}
+knitr::kable(tausts_tetra)
+```
+
+
+We observe a clustering for the back, the rump, the first rectrice, the belly and the remiges. 
+This means co-occuring species are more similar on these patches than expected by chance.
+
+With decoupled Fdist:
+
+```{r}
+knitr::kable(tausts_dc_tetra)
+```
+
+## Iridescence
+
+An explanation would be that species are the same 'basic' colour but
+differ in their iridescence properties.
+
+In this framework, iridescence can be described as the coordinates of the vector
+in the tetrahedron.
+
+### Phenotypic structure of the colour when taking into account iridescence
+
+```{r}
+knitr::kable(tausts_IR_MAX)
+```
+
+When we take into account iridescence, we observe a phenotypic 
+clustering on the back, the rump, the first rectrice, and the throat.
+
+With decoupled Fdist:
+
+```{r}
+knitr::kable(tausts_dc_IR_MAX)
+```
+
+### Phenotypic stucture on the nanostructures responsible for iridescence.
+
+```{r display_tausts_iri}
+knitr::kable(tausts_iri)
+```
+
+Characteristics of the structures are clustered on the throat but not on any 
+other patch.
+
+With decoupled Fdist:
+
+```{r}
+knitr::kable(tausts_dc_iri)
+```
+
+## Possible explanations
+
+How can we explain that results differ from our predictions:
+  
+  - No structure can be the sign of habitat filtering and competition as 
+  antagonistic evolutionary pressures.
+  
+  - Colours in co-occuring species, although no more different than expected by 
+  chance, are still different enough to enable species recognition
+  
+  - Species recognition is done via other means
+  
+  - There is little or no cost to interbreeding
+  
+## Brightness
+
+```{r display_tausts_brightness}
+knitr::kable(tausts_brightness)
+```
+
+```{r}
+knitr::kable(tausts_dc_brightness)
+```
+
+# Response to crowdedness
+
+Maybe species don't diverge in their colouration but the signal still evolves to
+deal with communication in a crowded space.
+
+## Colour volume
+
+![Link between colour volume and average number of co-occuring species](figures/cooc_colvol.png)
+
+## Signal brightness
+
+According to the litterature, we predict that species living in crowded 
+communities, where the sensory competition is possibly stronger, generate
+stronger signals.
+
+![Link between brightness and average number of co-occuring species](figures/comm_brightnessrange.png)
+
+## Directionality of the signal
+
+Iridescent colours are also directional. This means that, besides for a 
+restricted range of angles, the patch will appear as black.
