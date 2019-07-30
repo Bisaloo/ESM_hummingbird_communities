@@ -1,3 +1,6 @@
+[![DOI](https://zenodo.org/badge/199661042.svg)](https://zenodo.org/badge/latestdoi/199661042)
+
+
 This repo contains the data and scripts to reproduce the results and figures from the manuscript https://doi.org/10.1101/586362.
 
 You can get the figures and a report in HTML format by running:
